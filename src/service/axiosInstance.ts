@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosError, AxiosResponse } from 'axios'
 import useAuth from '@/store/useAuth'
 
 const https: AxiosInstance = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_API}v1/`,
+  baseURL: `${process.env.NEXT_PUBLIC_API}`,
   paramsSerializer: {
     indexes: null
   },

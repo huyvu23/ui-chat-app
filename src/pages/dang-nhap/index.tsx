@@ -25,6 +25,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff'
 
 // SERVICE
 import { TFormLogin } from '@/service/AuthService/type'
+import { login } from '@/service/AuthService'
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -68,14 +69,13 @@ function SignIn() {
     resolver: yupResolver(schema)
   })
 
-  const handleSubmit = async (data: TFormLogin): Promise<void> => {
+  const handleSubmit = async (dataForm: TFormLogin): Promise<void> => {
     try {
       setIsLoading(true)
-
-      // const response = await login(payload)
-      // setLoginData(response.data)
-      // enqueueSnackbar('Đăng nhập thành công', { variant: 'success' })
-      // router.push('/quan-ly-don-hang-quoc-te')
+      const response = await login(dataForm)
+      setLoginData(response.data)
+      enqueueSnackbar('Đăng nhập thành công', { variant: 'success' })
+      router.push('/chat')
     } catch (error) {
       enqueueSnackbar((error as any)?.error?.message || 'Đã có nỗi xảy ra !', {
         variant: 'error'
