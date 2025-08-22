@@ -6,6 +6,8 @@ import ListItemButton from '@mui/material/ListItemButton'
 import ListItemText from '@mui/material/ListItemText'
 import Typography from '@mui/material/Typography'
 import Avatar from '@mui/material/Avatar'
+import Stack from '@mui/material/Stack'
+import Button from '@mui/material/Button'
 
 const users = [
   { id: 'alice', name: 'Alice' },
@@ -17,10 +19,16 @@ export default function Sidebar() {
   return (
     <Box sx={{ height: '100%', bgcolor: 'white', borderRight: '1px solid #eee', p: 2 }}>
       <Box sx={{ mb: 2 }}>
-        <Typography variant='subtitle2' color='text.secondary'>
-          Logged as
-        </Typography>
-        <Typography variant='h6'>HUY</Typography>
+        <Stack direction='row' alignItems='center' justifyContent='space-between'>
+          <Stack direction='column' rowGap={1}>
+            <Typography variant='subtitle2' color='text.secondary'>
+              Người dùng
+            </Typography>
+            <Typography variant='h6'>HUY</Typography>
+          </Stack>
+
+          <Button>Đăng xuất</Button>
+        </Stack>
       </Box>
       <Typography variant='subtitle2' sx={{ mb: 1 }}>
         Contacts

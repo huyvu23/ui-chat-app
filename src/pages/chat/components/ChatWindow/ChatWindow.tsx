@@ -5,8 +5,11 @@ import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
 import ChatWindowHeader from './ChatWindowHeader/ChatWindowHeader'
+import useAuth from '@/store/useAuth'
 
 export default function ChatWindow() {
+  const { user } = useAuth()
+
   const [text, setText] = useState('')
   const [messages, setMessages] = useState<string[]>([])
 
@@ -23,8 +26,9 @@ export default function ChatWindow() {
     getMessages()
   }, [])
 
-  const handleSend = () => {
-    console.log('click')
+  const handleSend = (): void => {
+    if (!text.trim()) return
+    const msg = { senderId: user?.id, content: text, conversationId: 'ádas' }
   }
 
   const getMessages = (): void => {
