@@ -1,4 +1,9 @@
-import React from 'react'
+import React, { useEffect,useState } from 'react'
+import useAuth from '@/store/useAuth'
+import { useRouter } from 'next/navigation'
+import useAuthStore from '@/store/useAuth'
+
+// MUI IMPORT
 import Box from '@mui/material/Box'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
@@ -9,13 +14,40 @@ import Avatar from '@mui/material/Avatar'
 import Stack from '@mui/material/Stack'
 import Button from '@mui/material/Button'
 
-const users = [
-  { id: 'alice', name: 'Alice' },
-  { id: 'bob', name: 'Bob' },
-  { id: 'carl', name: 'Carl' }
-]
+// SERVICE
+import { getAllUsers } from '@/service/UserService'
+import {TUser} from "@/service/AuthService/type";
+
+
 
 export default function Sidebar() {
+  const { logout } = useAuth()
+  const router = useRouter()
+  const { user } = useAuthStore()
+
+    const [listContacts, setListContacts] = useState<TUser[]>([])
+
+  const handleLogout = (): void => {
+    logout()
+    router.push('/login')
+  }
+
+  const getAllContact = async (): Promise<void> => {
+    try {
+      const response = await getAllUsers()
+        const finalResult:TUser[] = response?.data?.filter(({id}:TUser) =>{
+            return id !== user?.id
+        })
+        setListContacts(finalResult)
+    } catch (e) {
+      console.log('e:', e)
+    }
+  }
+
+  useEffect(() => {
+    getAllContact()
+  }, [])
+
   return (
     <Box sx={{ height: '100%', bgcolor: 'white', borderRight: '1px solid #eee', p: 2 }}>
       <Box sx={{ mb: 2 }}>
@@ -24,21 +56,21 @@ export default function Sidebar() {
             <Typography variant='subtitle2' color='text.secondary'>
               Người dùng
             </Typography>
-            <Typography variant='h6'>HUY</Typography>
+            <Typography variant='h6'>{user?.username || ''}</Typography>
           </Stack>
 
-          <Button>Đăng xuất</Button>
+          <Button onClick={handleLogout}>Đăng xuất</Button>
         </Stack>
       </Box>
       <Typography variant='subtitle2' sx={{ mb: 1 }}>
         Contacts
       </Typography>
       <List>
-        {users.map(u => (
+        {listContacts.map(u => (
           <ListItem key={u.id} disablePadding>
             <ListItemButton>
-              <Avatar sx={{ mr: 2 }}>{u.name.charAt(0)}</Avatar>
-              <ListItemText primary={u.name} />
+              <Avatar sx={{ mr: 2 }}>{u.username.charAt(0)}</Avatar>
+              <ListItemText primary={u.username} />
             </ListItemButton>
           </ListItem>
         ))}

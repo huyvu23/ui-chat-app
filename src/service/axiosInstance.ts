@@ -6,7 +6,8 @@ const https: AxiosInstance = axios.create({
   paramsSerializer: {
     indexes: null
   },
-  timeout: 300 * 1000
+  timeout: 300 * 1000,
+  headers: { 'Content-Type': 'application/json' }
 })
 https.interceptors.request.use(
   async function (config) {

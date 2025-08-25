@@ -2,7 +2,6 @@ export type TUser = {
   id: number
   username: string
   createdAt: string
-  accessToken: string
 }
 
 export type TFormLogin = {
@@ -10,7 +9,8 @@ export type TFormLogin = {
   password: string
 }
 
-export type TResponseLogin = {
+type TAccessToken = {
   accessToken: string
-  user: TUser
 }
+
+export type TResponseLogin = TUser & TAccessToken
