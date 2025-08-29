@@ -24,7 +24,7 @@ export default function App(props: AppProps) {
     const isLoginPage: boolean = ['/dang-nhap/', '/dang-nhap']?.includes(pathname)
     if (hasToken && isLoginPage) {
       // Đã đăng nhập mà vẫn ở trang đăng nhập → redirect về trang chính
-      router.replace('/quan-ly-don-hang-quoc-te')
+      router.replace('/chat')
       return
     }
 

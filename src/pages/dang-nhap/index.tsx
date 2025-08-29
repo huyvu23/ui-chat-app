@@ -73,11 +73,7 @@ function SignIn() {
     try {
       setIsLoading(true)
       const response = await login(dataForm)
-      const { accessToken, ...rest } = response?.data
-      setLoginData({
-        accessToken,
-        user: rest
-      })
+      setLoginData(response?.data)
       enqueueSnackbar('Đăng nhập thành công', { variant: 'success' })
       router.push('/chat')
     } catch (error) {

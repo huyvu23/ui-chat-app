@@ -9,8 +9,7 @@ export type TFormLogin = {
   password: string
 }
 
-type TAccessToken = {
+export type TResponseLogin = {
+  user: TUser
   accessToken: string
 }
-
-export type TResponseLogin = TUser & TAccessToken

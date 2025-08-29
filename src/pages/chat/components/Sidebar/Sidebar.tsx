@@ -1,4 +1,4 @@
-import React, { useEffect,useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import useAuth from '@/store/useAuth'
 import { useRouter } from 'next/navigation'
 import useAuthStore from '@/store/useAuth'
@@ -16,16 +16,15 @@ import Button from '@mui/material/Button'
 
 // SERVICE
 import { getAllUsers } from '@/service/UserService'
-import {TUser} from "@/service/AuthService/type";
-
-
+import { TUser } from '@/service/AuthService/type'
+import { checkConversation } from '@/service/ConversationsService'
 
 export default function Sidebar() {
   const { logout } = useAuth()
-  const router = useRouter()
   const { user } = useAuthStore()
+  const router = useRouter()
 
-    const [listContacts, setListContacts] = useState<TUser[]>([])
+  const [listContacts, setListContacts] = useState<TUser[]>([])
 
   const handleLogout = (): void => {
     logout()
@@ -35,10 +34,8 @@ export default function Sidebar() {
   const getAllContact = async (): Promise<void> => {
     try {
       const response = await getAllUsers()
-        const finalResult:TUser[] = response?.data?.filter(({id}:TUser) =>{
-            return id !== user?.id
-        })
-        setListContacts(finalResult)
+      const finalResult: TUser[] = response?.data?.map((user: TUser): TUser => user)
+      setListContacts(finalResult)
     } catch (e) {
       console.log('e:', e)
     }
@@ -47,6 +44,21 @@ export default function Sidebar() {
   useEffect(() => {
     getAllContact()
   }, [])
+
+  const handleChoosePartnerChat = async (value: TUser): Promise<void> => {
+    try {
+      const response = await checkConversation({
+        receiverId: value.id,
+        senderId: user?.id || 0
+      })
+      const { id } = response.data
+      if (id) {
+        router.push(`/chat?conversation=${id}&username=${value.username}&userId=${value.id}`)
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
   return (
     <Box sx={{ height: '100%', bgcolor: 'white', borderRight: '1px solid #eee', p: 2 }}>
@@ -68,7 +80,7 @@ export default function Sidebar() {
       <List>
         {listContacts.map(u => (
           <ListItem key={u.id} disablePadding>
-            <ListItemButton>
+            <ListItemButton onClick={() => handleChoosePartnerChat(u)}>
               <Avatar sx={{ mr: 2 }}>{u.username.charAt(0)}</Avatar>
               <ListItemText primary={u.username} />
             </ListItemButton>
