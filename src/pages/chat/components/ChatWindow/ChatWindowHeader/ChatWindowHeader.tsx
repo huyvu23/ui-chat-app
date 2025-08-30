@@ -3,6 +3,7 @@ import Typography from '@mui/material/Typography'
 import Avatar from '@mui/material/Avatar'
 import IconButton from '@mui/material/IconButton'
 import Stack from '@mui/material/Stack'
+import Badge from '@mui/material/Badge'
 
 // ICON
 import CallIcon from '@mui/icons-material/Call'
@@ -29,7 +30,18 @@ const ChatHeader = ({ name, avatarUrl }: ChatHeaderProps) => {
     >
       {/* Avatar + Name */}
       <Box sx={{ display: 'flex', alignItems: 'center', columnGap: 2 }}>
-        <Avatar src={avatarUrl} alt={name} />
+        <Badge
+          overlap='circular'
+          badgeContent=' '
+          variant='dot'
+          color='success'
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right'
+          }}
+        >
+          <Avatar src={avatarUrl} alt={name} />
+        </Badge>
         <Typography variant='h6' sx={{ fontWeight: 600 }}>
           {name}
         </Typography>

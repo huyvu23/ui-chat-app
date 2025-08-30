@@ -11,6 +11,7 @@ import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
+import CircularProgress from '@mui/material/CircularProgress'
 
 // SERVICE
 import { getMessagesAccordingConversation } from '@/service/MessagesService'
@@ -21,22 +22,43 @@ export default function ChatWindow() {
   const router = useRouter()
   const { query } = router
 
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null)
+
   const [text, setText] = useState('')
   const [isLoadingMessages, setLoadingMessages] = useState<boolean>(false)
   const [messages, setMessages] = useState<TResponseMessages[]>([])
 
-  const ref = useRef<HTMLDivElement | null>(null)
-
-  // useEffect(() => {
-  //     if (ref.current) ref.current.scrollTop = ref.current.scrollHeight;
-  // }, [messages, selected]);
   useEffect(() => {
     getMessages()
   }, [query?.conversation])
 
+  const scrollToBottom = (smooth: boolean = true) => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: smooth ? 'smooth' : 'auto'
+      })
+    }
+  }
+
+  useEffect(() => {
+    // if (!messagesContainerRef.current) return
+
+    // const container = messagesContainerRef.current
+
+    // kiểm tra xem user có đang ở cuối không
+    // const isAtBottom = Math.abs(container.scrollHeight - container.scrollTop - container.clientHeight) < 50 // tolerance 50px
+
+    // const lastMessage = messages[messages.length - 1]
+    // const isSender = lastMessage?.sender?.id === user?.id
+    //
+    // if (isSender || isAtBottom) {
+    // }
+    scrollToBottom(true)
+  }, [messages])
+
   useEffect(() => {
     if (!query?.conversation) return
-    console.log('query', query?.conversation)
     socket.emit('joinRoom', {
       conversationId: query.conversation
     })
@@ -85,38 +107,58 @@ export default function ChatWindow() {
           <ChatWindowHeader name={typeof query?.username === 'string' ? query?.username : ''} />
 
           {/* Message List */}
-          <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
-            {messages.map((itemMessage: TResponseMessages, idx: number) => {
-              const { content, createdAt, sender } = itemMessage
-              const isSender: boolean = sender?.id === user?.id
-              return (
-                <Fragment key={idx}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: isSender ? 'flex-end' : 'flex-start',
-                      mb: 1
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        bgcolor: isSender ? 'primary.main' : '#eee',
-                        color: isSender ? '#fff' : '#000',
-                        p: 1.5,
-                        borderRadius: 2,
-                        maxWidth: '60%',
-                        wordBreak: 'break-word' // tránh tràn chữ
-                      }}
-                    >
-                      <Typography variant='caption' sx={{ opacity: 0.7 }}>
-                        {DDMMYYYYHHmmss(createdAt)}
-                      </Typography>
-                      <Typography>{content}</Typography>
-                    </Box>
-                  </Box>
-                </Fragment>
-              )
-            })}
+
+          <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }} ref={messagesContainerRef}>
+            {isLoadingMessages ? (
+              <Box
+                sx={{
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%'
+                }}
+              >
+                <CircularProgress size={30} />
+              </Box>
+            ) : (
+              <>
+                {messages.map((itemMessage: TResponseMessages, idx: number) => {
+                  const { content, createdAt, sender } = itemMessage
+                  const isSender: boolean = sender?.id === user?.id
+                  return (
+                    <Fragment key={idx}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: isSender ? 'flex-end' : 'flex-start',
+                          mb: 1
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            bgcolor: isSender ? 'primary.main' : '#eee',
+                            color: isSender ? '#fff' : '#000',
+                            p: 1.5,
+                            borderRadius: 2,
+                            maxWidth: '60%',
+                            wordBreak: 'break-word' // tránh tràn chữ
+                          }}
+                        >
+                          <Typography variant='caption' sx={{ opacity: 0.7 }}>
+                            {DDMMYYYYHHmmss(createdAt)}
+                          </Typography>
+                          <Typography>{content}</Typography>
+                        </Box>
+                      </Box>
+                    </Fragment>
+                  )
+                })}
+              </>
+            )}
+            {/* marker để scroll xuống cuối */}
+            <div ref={messagesEndRef} />
           </Box>
 
           {/* Input Box */}
