@@ -45,7 +45,7 @@ const TRANSITION_DURATION = '0.4s'
 
 function SignIn() {
   const router = useRouter()
-  const { setLoginData } = useAuth()
+  const { setUserData, setAccessToken } = useAuth()
 
   const { enqueueSnackbar } = useSnackbar()
   // STATE
@@ -73,7 +73,9 @@ function SignIn() {
     try {
       setIsLoading(true)
       const response = await login(dataForm)
-      setLoginData(response?.data)
+      const { accessToken, user } = response.data
+      setAccessToken(accessToken)
+      setUserData(user)
       enqueueSnackbar('Đăng nhập thành công', { variant: 'success' })
       router.push('/chat')
     } catch (error) {

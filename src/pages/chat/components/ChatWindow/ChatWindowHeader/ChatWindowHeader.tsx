@@ -1,3 +1,9 @@
+import { useEffect, useMemo } from 'react'
+import { useRouter } from 'next/router'
+import useAuth from '@/store/useAuth'
+import { socketConfig } from '@/socket'
+
+// MUI IMPORT
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Avatar from '@mui/material/Avatar'
@@ -31,6 +37,7 @@ const ChatHeader = ({ name, avatarUrl }: ChatHeaderProps) => {
       {/* Avatar + Name */}
       <Box sx={{ display: 'flex', alignItems: 'center', columnGap: 2 }}>
         <Badge
+          invisible={true}
           overlap='circular'
           badgeContent=' '
           variant='dot'

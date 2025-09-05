@@ -2,16 +2,11 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { TUser } from '@/service/AuthService/type'
 
-export type TInformationUserLogin = {
-  accessToken: string
-  user: TUser
-}
-
 interface AuthState {
   accessToken: string | null
   refreshToken: string | null
   user: TUser | null
-  setLoginData: (data: TInformationUserLogin) => void
+  setUserData: (data: TUser) => void
   logout: () => void
   setAccessToken: (accessToken: string) => void
   setRefreshToken: (refreshToken: string) => void
@@ -26,10 +21,9 @@ const useAuthStore = create<AuthState>()(
       refreshToken: null,
       user: null,
       hasHydrated: false,
-      setLoginData: (data: TInformationUserLogin) => {
+      setUserData: (data: TUser) => {
         set({
-          accessToken: data.accessToken,
-          user: data.user
+          user: data
         })
       },
       logout: () => {

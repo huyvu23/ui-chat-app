@@ -1,9 +1,12 @@
-import { io } from 'socket.io-client'
+import { io, ManagerOptions, SocketOptions } from 'socket.io-client'
 
-const socket = io('http://localhost:3000', {
-  path: '/ws-chat',
-  transports: ['websocket'],
-  withCredentials: false
-})
+const URL_BASE = 'http://localhost:3000'
 
-export default socket
+export const socketConfig = (socketOptions?: Partial<ManagerOptions & SocketOptions>) => {
+  return io(URL_BASE, {
+    path: '/ws-chat',
+    transports: ['websocket'],
+    withCredentials: false,
+    ...socketOptions
+  })
+}

@@ -1,9 +1,10 @@
-import React, { useRef, useEffect, useState, Fragment } from 'react'
+import React, { useMemo, useRef, useEffect, useState, Fragment } from 'react'
 import ChatWindowHeader from './ChatWindowHeader/ChatWindowHeader'
 import useAuth from '@/store/useAuth'
-import socket from '@/socket'
 import { useRouter } from 'next/router'
 import { DDMMYYYYHHmmss } from '@/utils/dateFormat'
+import { socketConfig } from '@/socket'
+import { useSnackbar } from 'notistack'
 
 // MUI IMPORT
 import Box from '@mui/material/Box'
@@ -18,9 +19,10 @@ import { getMessagesAccordingConversation } from '@/service/MessagesService'
 import { TResponseMessages } from '@/service/MessagesService/type'
 
 export default function ChatWindow() {
-  const { user } = useAuth()
+  const { user, accessToken } = useAuth()
   const router = useRouter()
   const { query } = router
+  const { enqueueSnackbar } = useSnackbar()
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
@@ -28,6 +30,14 @@ export default function ChatWindow() {
   const [text, setText] = useState('')
   const [isLoadingMessages, setLoadingMessages] = useState<boolean>(false)
   const [messages, setMessages] = useState<TResponseMessages[]>([])
+
+  const socket = useMemo(() => {
+    return socketConfig({
+      query: {
+        token: accessToken || ''
+      }
+    })
+  }, [])
 
   useEffect(() => {
     getMessages()
@@ -68,6 +78,12 @@ export default function ChatWindow() {
     }
 
     socket.on('message', handleOnReceiveMessage)
+
+    socket.on('exception', error => {
+      enqueueSnackbar(error.message || 'Đã có nỗi xảy ra !', {
+        variant: 'error'
+      })
+    })
 
     return () => {
       socket.on('message', handleOnReceiveMessage)
