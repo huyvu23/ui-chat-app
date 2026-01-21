@@ -14,22 +14,17 @@ export default function App(props: AppProps) {
   const { Component, pageProps } = props
   const router: NextRouter = useRouter()
   const pathname: string = usePathname()
-  const noLayoutRoutes: string[] = ['/dang-nhap', '/404', '/500', '/']
   const { accessToken, hasHydrated } = useAuth()
   const [isReady, setIsReady] = useState<boolean>(false)
   useEffect(() => {
     if (!hasHydrated) return
 
     const hasToken: boolean = Boolean(accessToken)
-    const isLoginPage: boolean = ['/dang-nhap/', '/dang-nhap']?.includes(pathname)
-    if (hasToken && isLoginPage) {
-      // Đã đăng nhập mà vẫn ở trang đăng nhập → redirect về trang chính
-      router.replace('/quan-ly-don-hang-quoc-te')
-      return
-    }
+    const publicPages: string[] = ['/dang-nhap', '/dang-ky']
+    const isPublicPage: boolean = publicPages.includes(pathname)
 
-    if (!hasToken && !isLoginPage) {
-      // Chưa đăng nhập mà không ở trang login → redirect về login
+    if (!hasToken && !isPublicPage) {
+      // Chưa đăng nhập mà không ở trang public → redirect về login
       router.replace('/dang-nhap')
       return
     }

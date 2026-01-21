@@ -5,7 +5,6 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import { string, object, ObjectSchema } from 'yup'
 import { useRouter } from 'next/navigation'
 import { useSnackbar } from 'notistack'
-import useAuth from '@/store/useAuth'
 import { useForm, UseFormReturn } from 'react-hook-form'
 
 // MUI IMPORT
@@ -24,8 +23,8 @@ import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
 
 // SERVICE
-import { TFormLogin } from '@/service/AuthService/type'
-import { login } from '@/service/AuthService'
+import { TFormRegister } from '@/service/AuthService/type'
+import { register } from '@/service/AuthService'
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -43,11 +42,10 @@ const Card = styled(MuiCard)(({ theme }) => ({
 
 const TRANSITION_DURATION = '0.4s'
 
-function SignIn() {
+function SignUp() {
   const router = useRouter()
-  const { setLoginData } = useAuth()
-
   const { enqueueSnackbar } = useSnackbar()
+
   // STATE
   const [isShowPassword, setIsShowPassword] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -56,32 +54,29 @@ function SignIn() {
     setIsShowPassword(!isShowPassword)
   }
 
-  const schema: ObjectSchema<TFormLogin> = object({
-    usernameOrEmail: string().required('Trường bắt buộc'),
-    password: string().required('Trường bắt buộc')
+  const schema: ObjectSchema<TFormRegister> = object({
+    username: string().required('Trường bắt buộc'),
+    email: string().required('Trường bắt buộc').email('Email không hợp lệ'),
+    password: string().required('Trường bắt buộc').min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
   })
 
-  const methods: UseFormReturn<TFormLogin> = useForm({
+  const methods: UseFormReturn<TFormRegister> = useForm({
     defaultValues: {
-      usernameOrEmail: '',
+      username: '',
+      email: '',
       password: ''
     },
     resolver: yupResolver(schema)
   })
 
-  const handleSubmit = async (dataForm: TFormLogin): Promise<void> => {
+  const handleSubmit = async (dataForm: TFormRegister): Promise<void> => {
     try {
       setIsLoading(true)
-      const response = await login(dataForm)
-      const { token, ...rest } = response?.data
-      setLoginData({
-        accessToken: token,
-        user: rest
-      })
-      enqueueSnackbar('Đăng nhập thành công', { variant: 'success' })
-      router.push('/chat')
+      await register(dataForm)
+      enqueueSnackbar('Đăng ký thành công', { variant: 'success' })
+      router.push('/dang-nhap')
     } catch (error) {
-      enqueueSnackbar((error as any)?.error?.message || 'Đã có nỗi xảy ra !', {
+      enqueueSnackbar((error as any)?.error?.message || 'Đã có lỗi xảy ra!', {
         variant: 'error'
       })
     } finally {
@@ -134,14 +129,15 @@ function SignIn() {
               <FormWrapper methods={methods} onSubmit={handleSubmit}>
                 <Stack rowGap={4}>
                   <Typography component='h1' variant='h6' sx={{ width: '100%' }}>
-                    Chào mừng quay trở lại
+                    Tạo tài khoản mới
                   </Typography>
-                  <TextFieldCustom nameField='usernameOrEmail' label='Tài khoản' placeholder='Nhập tài khoản' />
+                  <TextFieldCustom nameField='username' label='Tên tài khoản' placeholder='Nhập tên tài khoản' />
+                  <TextFieldCustom nameField='email' label='Email' placeholder='Nhập email' type='email' />
                   <TextFieldCustom
                     type={isShowPassword ? 'text' : 'password'}
                     nameField='password'
                     label='Mật khẩu'
-                    placeholder='Nhập mật khẩu'
+                    placeholder='Nhập mật khẩu (ít nhất 6 ký tự)'
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position='end'>
@@ -169,30 +165,13 @@ function SignIn() {
                     }}
                   />
                   <LoadingButton loading={isLoading} variant='contained' type='submit' color='primary'>
-                    Đăng nhập
+                    Đăng ký
                   </LoadingButton>
 
-                  <Link
-                    component='button'
-                    type='button'
-                    onClick={() => {
-                      console.log('click')
-                    }}
-                    variant='body2'
-                    sx={{ alignSelf: 'center' }}
-                  >
-                    Quên mật khẩu ?
-                  </Link>
-
                   <Typography variant='body2' sx={{ alignSelf: 'center' }}>
-                    Chưa có tài khoản?{' '}
-                    <Link
-                      component='button'
-                      type='button'
-                      onClick={() => router.push('/dang-ky')}
-                      sx={{ fontWeight: 600 }}
-                    >
-                      Đăng ký
+                    Đã có tài khoản?{' '}
+                    <Link component='button' type='button' onClick={() => router.push('/dang-nhap')} variant='body2'>
+                      Đăng nhập
                     </Link>
                   </Typography>
                 </Stack>
@@ -222,4 +201,4 @@ function SignIn() {
   )
 }
 
-export default SignIn
+export default SignUp
