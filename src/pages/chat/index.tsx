@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid'
 import Chip from '@mui/material/Chip'
@@ -6,35 +6,9 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Sidebar from './components/Sidebar/Sidebar'
 import ChatWindow from './components/ChatWindow/ChatWindow'
 import useSocket from '@/hooks/useSocket'
-import { SOCKET_EVENTS } from '@/socket'
 
 const Chat = () => {
-  const { socket, status, isConnected, on, off } = useSocket()
-
-  // Example: Listen for incoming messages
-  useEffect(() => {
-    if (!isConnected) return
-
-    const handleReceiveMessage = (message: unknown) => {
-      console.log('📩 New message received:', message)
-      // Handle new message (update state, show notification, etc.)
-    }
-
-    const handleUserTyping = (data: unknown) => {
-      console.log('⌨️ User typing:', data)
-      // Handle typing indicator
-    }
-
-    // Subscribe to events
-    on(SOCKET_EVENTS.RECEIVE_MESSAGE, handleReceiveMessage)
-    on(SOCKET_EVENTS.USER_TYPING, handleUserTyping)
-
-    // Cleanup listeners on unmount
-    return () => {
-      off(SOCKET_EVENTS.RECEIVE_MESSAGE, handleReceiveMessage)
-      off(SOCKET_EVENTS.USER_TYPING, handleUserTyping)
-    }
-  }, [isConnected, on, off])
+  const { status } = useSocket()
 
   // Connection status indicator
   const getStatusChip = () => {

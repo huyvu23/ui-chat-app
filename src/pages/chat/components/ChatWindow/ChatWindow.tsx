@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import useAuthStore from '@/store/useAuth'
 
@@ -12,7 +12,7 @@ import InputBase from '@mui/material/InputBase'
 import Tooltip from '@mui/material/Tooltip'
 import Badge from '@mui/material/Badge'
 import Skeleton from '@mui/material/Skeleton'
-import { styled } from '@mui/material/styles'
+import { styled, keyframes } from '@mui/material/styles'
 
 // MUI Icons
 import CallIcon from '@mui/icons-material/Call'
@@ -29,6 +29,10 @@ import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 // SERVICE
 import { getMessageInConversationId } from '@/service/MessagesService'
 import { TResponseMessage } from '@/service/MessagesService/type'
+
+// SOCKET
+import useChatSocket from '@/hooks/useChatSocket'
+import { NewMessagePayload } from '@/socket/events'
 
 // Styled Components
 const ChatContainer = styled(Box)({
@@ -146,9 +150,41 @@ const EmptyStateContainer = styled(Box)({
   padding: '32px'
 })
 
+// Typing indicator animation
+const bounce = keyframes`
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
+`
+
+const TypingIndicator = styled(Box)({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '4px',
+  padding: '8px 12px',
+  backgroundColor: '#e4e6e9',
+  borderRadius: '18px',
+  width: 'fit-content',
+  '& .dot': {
+    width: '6px',
+    height: '6px',
+    borderRadius: '50%',
+    backgroundColor: '#65676b',
+    animation: `${bounce} 1.4s infinite ease-in-out`,
+    '&:nth-of-type(1)': { animationDelay: '0s' },
+    '&:nth-of-type(2)': { animationDelay: '0.2s' },
+    '&:nth-of-type(3)': { animationDelay: '0.4s' }
+  }
+})
+
 // Skeleton for loading messages
 const MessageSkeleton = ({ isOwn }: { isOwn: boolean }) => (
-  <Stack direction='row' justifyContent={isOwn ? 'flex-end' : 'flex-start'} alignItems='flex-end' spacing={1} sx={{ mb: 1 }}>
+  <Stack
+    direction='row'
+    justifyContent={isOwn ? 'flex-end' : 'flex-start'}
+    alignItems='flex-end'
+    spacing={1}
+    sx={{ mb: 1 }}
+  >
     {!isOwn && <Skeleton variant='circular' width={28} height={28} />}
     <Skeleton
       variant='rounded'
@@ -197,7 +233,41 @@ const ChatWindow = () => {
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<TResponseMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isSending, setIsSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Handle new message from socket
+  const handleNewMessage = useCallback(
+    (newMsg: NewMessagePayload) => {
+      // Only add message if it's for the current conversation
+      if (newMsg.conversationId === conversationId) {
+        const messageToAdd: TResponseMessage = {
+          id: newMsg.id,
+          content: newMsg.content,
+          conversationId: newMsg.conversationId,
+          senderId: newMsg.senderId,
+          sender: newMsg.sender,
+          updatedAt: newMsg.updatedAt,
+          type: newMsg.type
+        }
+        setMessages(prev => [...prev, messageToAdd])
+      }
+    },
+    [conversationId]
+  )
+
+  // Initialize chat socket
+  const {
+    isConnected,
+    sendMessage: socketSendMessage,
+    startTyping,
+    stopTyping,
+    typingUsers,
+    onlineUsers
+  } = useChatSocket({
+    conversationId,
+    onNewMessage: handleNewMessage
+  })
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -232,20 +302,51 @@ const ChatWindow = () => {
     }
   }, [messages, isLoading])
 
-  const handleSendMessage = () => {
-    if (message.trim() && conversationId) {
-      // TODO: Implement send message via socket/API
-      const newMessage: TResponseMessage = {
-        id: `temp-${Date.now()}`,
-        content: message.trim(),
-        conversationId: conversationId,
-        senderId: user?.id || '',
-        sender: user!,
-        updatedAt: new Date().toISOString(),
-        type: 'TEXT'
+  // Handle input change with typing indicator
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessage(e.target.value)
+    if (e.target.value.trim()) {
+      startTyping()
+    } else {
+      stopTyping()
+    }
+  }
+
+  const handleSendMessage = async () => {
+    if (!message.trim() || !conversationId || isSending) return
+
+    const messageContent = message.trim()
+    setMessage('')
+    stopTyping()
+
+    // Optimistic update - add message immediately
+    const tempId = `temp-${Date.now()}`
+    const optimisticMessage: TResponseMessage = {
+      id: tempId,
+      content: messageContent,
+      conversationId: conversationId,
+      senderId: user?.id || '',
+      sender: user!,
+      updatedAt: new Date().toISOString(),
+      type: 'TEXT'
+    }
+    setMessages(prev => [...prev, optimisticMessage])
+
+    // Send via socket
+    if (isConnected) {
+      setIsSending(true)
+      try {
+        const response = await socketSendMessage(messageContent)
+        if (response?.id) {
+          // Update temp message with real ID
+          setMessages(prev => prev.map(msg => (msg.id === tempId ? { ...msg, id: response.id } : msg)))
+        }
+      } catch (error) {
+        console.error('Failed to send message:', error)
+        // Could remove optimistic message or show error state
+      } finally {
+        setIsSending(false)
       }
-      setMessages(prev => [...prev, newMessage])
-      setMessage('')
     }
   }
 
@@ -256,18 +357,23 @@ const ChatWindow = () => {
     }
   }
 
-  const handleSendLike = () => {
-    if (conversationId) {
-      const newMessage: TResponseMessage = {
-        id: `temp-${Date.now()}`,
-        content: '👍',
-        conversationId: conversationId,
-        senderId: user?.id || '',
-        sender: user!,
-        updatedAt: new Date().toISOString(),
-        type: 'TEXT'
-      }
-      setMessages(prev => [...prev, newMessage])
+  const handleSendLike = async () => {
+    if (!conversationId || isSending) return
+
+    const tempId = `temp-${Date.now()}`
+    const optimisticMessage: TResponseMessage = {
+      id: tempId,
+      content: '👍',
+      conversationId: conversationId,
+      senderId: user?.id || '',
+      sender: user!,
+      updatedAt: new Date().toISOString(),
+      type: 'TEXT'
+    }
+    setMessages(prev => [...prev, optimisticMessage])
+
+    if (isConnected) {
+      await socketSendMessage('👍')
     }
   }
 
@@ -288,6 +394,11 @@ const ChatWindow = () => {
     }
     return acc
   }, [])
+
+  // Get typing users for current conversation (excluding self)
+  const typingUsersInConversation = Array.from(typingUsers.values()).filter(
+    t => t.conversationId === conversationId && t.userId !== user?.id
+  )
 
   // No conversation selected state
   if (!conversationId) {
@@ -336,7 +447,9 @@ const ChatWindow = () => {
   // Get display info for header (first message sender that is not current user)
   const otherUser = messages.find(m => m.senderId !== user?.id)?.sender
   const displayName = otherUser?.username || 'Đang tải...'
-  const isOnline = false // TODO: Implement online status
+  const otherUserId = otherUser?.id
+  const isOnline = otherUserId ? onlineUsers.has(otherUserId) : false
+  // console.log('onlineUsers:', onlineUsers)
 
   return (
     <ChatContainer>
@@ -476,6 +589,31 @@ const ChatWindow = () => {
               <MessageBubble isOwn={msg.isOwn}>{msg.content}</MessageBubble>
             </Stack>
           ))}
+
+        {/* Typing Indicator */}
+        {typingUsersInConversation.length > 0 && (
+          <Stack direction='row' alignItems='flex-end' spacing={1} sx={{ mb: 1.5 }}>
+            <Box sx={{ width: 28, height: 28 }}>
+              <Avatar
+                sx={{
+                  width: 28,
+                  height: 28,
+                  bgcolor: stringToColor(typingUsersInConversation[0].username),
+                  fontSize: '11px',
+                  fontWeight: 600
+                }}
+              >
+                {getInitials(typingUsersInConversation[0].username)}
+              </Avatar>
+            </Box>
+            <TypingIndicator>
+              <Box className='dot' />
+              <Box className='dot' />
+              <Box className='dot' />
+            </TypingIndicator>
+          </Stack>
+        )}
+
         <div ref={messagesEndRef} />
       </MessagesContainer>
 
@@ -501,9 +639,11 @@ const ChatWindow = () => {
           <StyledInputBase
             placeholder='Aa'
             value={message}
-            onChange={e => setMessage(e.target.value)}
+            onChange={handleInputChange}
             onKeyPress={handleKeyPress}
+            onBlur={stopTyping}
             fullWidth
+            disabled={isSending}
           />
           <Tooltip title='Chọn emoji'>
             <IconButton sx={{ color: '#0084ff', p: 0.5 }}>
@@ -514,13 +654,13 @@ const ChatWindow = () => {
 
         {message.trim() ? (
           <Tooltip title='Gửi'>
-            <ActionButton onClick={handleSendMessage}>
+            <ActionButton onClick={handleSendMessage} disabled={isSending}>
               <SendIcon sx={{ fontSize: 22 }} />
             </ActionButton>
           </Tooltip>
         ) : (
           <Tooltip title='Gửi lượt thích'>
-            <ActionButton onClick={handleSendLike}>
+            <ActionButton onClick={handleSendLike} disabled={isSending}>
               <ThumbUpAltIcon sx={{ fontSize: 22 }} />
             </ActionButton>
           </Tooltip>

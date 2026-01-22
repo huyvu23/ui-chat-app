@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { Socket } from 'socket.io-client'
-import { initializeSocket, disconnectSocket, getSocket, SOCKET_EVENTS } from '@/socket'
+import { initializeSocket, disconnectSocket, getSocket } from '@/socket'
 
 // Socket connection status
 export type SocketStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
@@ -15,16 +15,8 @@ interface UseSocketReturn {
 }
 
 /**
- * Custom hook for managing socket connection in chat page
+ * Custom hook for managing socket connection
  * Handles connection lifecycle, cleanup, and provides utilities
- *
- * @example
- * const { socket, isConnected, emit, on, off } = useSocket()
- *
- * useEffect(() => {
- *   on('receive_message', handleNewMessage)
- *   return () => off('receive_message', handleNewMessage)
- * }, [on, off])
  */
 export const useSocket = (): UseSocketReturn => {
   const [status, setStatus] = useState<SocketStatus>('disconnected')
@@ -52,9 +44,9 @@ export const useSocket = (): UseSocketReturn => {
       setStatus('error')
     }
 
-    socketInstance.on(SOCKET_EVENTS.CONNECT, handleConnect)
-    socketInstance.on(SOCKET_EVENTS.DISCONNECT, handleDisconnect)
-    socketInstance.on(SOCKET_EVENTS.CONNECT_ERROR, handleConnectError)
+    socketInstance.on('connect', handleConnect)
+    socketInstance.on('disconnect', handleDisconnect)
+    socketInstance.on('connect_error', handleConnectError)
 
     // Set initial status
     if (socketInstance.connected) {
