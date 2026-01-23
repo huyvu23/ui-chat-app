@@ -1,15 +1,17 @@
-import { TUser } from '@/service/AuthService/type'
-
-type TConversation = {
-  id: number
-  createdAt: string // ISO Date string
+// Minimal sender info needed for displaying messages
+export type TMessageSender = {
+  id: string
+  username: string
+  email: string
+  avatar: string | null
 }
 
-export type TResponseMessages = {
-  id: number
+export type TResponseMessage = {
+  id: string
   content: string
-  createdAt: string // ISO Date string
-  conversation: TConversation
-  sender: TUser
-  receiver: TUser
+  conversationId: string
+  sender: TMessageSender
+  senderId: string
+  updatedAt: string
+  type: 'TEXT' | 'IMAGE' | 'VIDEO' | 'FILE'
 }

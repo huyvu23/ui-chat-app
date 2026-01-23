@@ -1,15 +1,29 @@
 export type TUser = {
-  id: number
-  username: string
+  avatar: string | null
   createdAt: string
+  email: string
+  id: string
+  lastSeen: string | null
+  password: string
+  updatedAt: string
+  username: string
 }
 
 export type TFormLogin = {
-  username: string
+  usernameOrEmail: string
   password: string
+}
+
+export type TFormRegister = {
+  username: string
+  email: string
+  password: string
+}
+
+type TAccessToken = {
+  token: string
 }
 
 export type TResponseLogin = {
   user: TUser
-  accessToken: string
-}
+} & TAccessToken

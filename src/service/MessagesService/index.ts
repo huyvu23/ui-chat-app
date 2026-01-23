@@ -1,8 +1,13 @@
-import https from '@/service/axiosInstance'
-import { TResponseMessages } from '@/service/MessagesService/type'
+import https from '../axiosInstance'
+import { TResponseMessage } from './type'
 
-const getMessagesAccordingConversation = async (conservationId: number) => {
-  return https.get<TResponseMessages[]>(`messages/conversation/${conservationId}`)
+const getMessageInConversationId = async (conversationId: string) => {
+  return https.get<{
+    messages: TResponseMessage[]
+    total: number
+    page: number
+    totalPages: number
+  }>(`messages/conversation/${conversationId}`)
 }
 
-export { getMessagesAccordingConversation }
+export { getMessageInConversationId }
