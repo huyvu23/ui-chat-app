@@ -24,4 +24,6 @@ type TAccessToken = {
   token: string
 }
 
-export type TResponseLogin = TUser & TAccessToken
+export type TResponseLogin = {
+  user: TUser
+} & TAccessToken

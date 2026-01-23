@@ -237,7 +237,9 @@ export default function Sidebar() {
       return conversation.name || 'Nhóm chat'
     }
     // For DIRECT chat, find the other participant
-    const otherParticipant = conversation.participants.find(p => p.userId !== user?.id)
+    const otherParticipant = conversation.participants.find(p => {
+      return p.userId !== user?.id
+    })
     return otherParticipant?.user?.username || 'Người dùng'
   }
 
