@@ -379,7 +379,8 @@ const ChatWindow = () => {
 
   // Group consecutive messages by sender
   const groupedMessages: TGroupedMessage[] = messages.reduce((acc: TGroupedMessage[], msg, index) => {
-    const isOwn = msg.senderId === user?.id
+    // Use sender.id instead of senderId as backend may return incorrect senderId
+    const isOwn = msg.sender?.id === user?.id
     const prevMsg = messages[index - 1]
     const isNewGroup = !prevMsg || prevMsg.senderId !== msg.senderId
 
