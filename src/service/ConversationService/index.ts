@@ -1,8 +1,12 @@
 import https from '../axiosInstance'
-import { TResponseConversation } from './type'
+import { TPayloadCreateConversation, TResponseConversation } from './type'
 
 const getConversation = async () => {
   return https.get<TResponseConversation[]>('conversations')
 }
 
-export { getConversation }
+const createConversation = async (payload: TPayloadCreateConversation) => {
+  return https.post<TResponseConversation>('conversations', payload)
+}
+
+export { getConversation, createConversation }

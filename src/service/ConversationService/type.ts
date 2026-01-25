@@ -17,3 +17,9 @@ export type TResponseConversation = {
   type: 'DIRECT' | 'GROUP'
   updatedAt: string
 }
+
+export type TPayloadCreateConversation = {
+  type: 'DIRECT' | 'GROUP'
+  participantIds: string[]
+  name?: string
+}

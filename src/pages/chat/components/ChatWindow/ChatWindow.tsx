@@ -319,7 +319,6 @@ const ChatWindow = () => {
     setMessage('')
     stopTyping()
 
-
     // Send via socket
     if (isConnected) {
       setIsSending(true)

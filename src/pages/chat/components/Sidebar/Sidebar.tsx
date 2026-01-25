@@ -26,7 +26,11 @@ import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'
 
 // SERVICE
 import { TResponseConversation } from '@/service/ConversationService/type'
-import { getConversation } from '@/service/ConversationService'
+import { createConversation, getConversation } from '@/service/ConversationService'
+
+// COMPONENTS
+import DialogContact from './components/DialogContact/DialogContact'
+import { TUser } from '@/service/AuthService/type'
 
 // Styled Components
 const SidebarContainer = styled(Box)({
@@ -196,6 +200,7 @@ export default function Sidebar() {
   const [searchQuery, setSearchQuery] = useState('')
   const [conversations, setConversations] = useState<TResponseConversation[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [openDialog, setOpenDialog] = useState(false)
 
   // Get conversationId from URL
   const selectedConversation = searchParams.get('conversationId')
@@ -204,6 +209,8 @@ export default function Sidebar() {
   const handleSelectConversation = (conversationId: string) => {
     router.push(`/chat?conversationId=${conversationId}`, { scroll: false })
   }
+
+  const handleToggleDialog = () => setOpenDialog(prev => !prev)
 
   const getAllConversation = async () => {
     try {
@@ -249,6 +256,25 @@ export default function Sidebar() {
     return name.toLowerCase().includes(searchQuery.toLowerCase())
   })
 
+  const handleCreateConversation = async (
+    userSelected: TUser
+  ) => {
+    try {
+      const response = await createConversation({
+        type: 'DIRECT',
+        participantIds: [userSelected.id],
+      })
+      handleToggleDialog()
+      setConversations(prev => [...prev, response.data])
+      // If no conversation selected in URL, select first one
+      if (!selectedConversation && response.data) {
+        router.replace(`/chat?conversationId=${response.data.id}`, { scroll: false })
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   return (
     <SidebarContainer>
       {/* Header */}
@@ -289,6 +315,7 @@ export default function Sidebar() {
           </Tooltip>
           <Tooltip title='Tin nhắn mới'>
             <IconButton
+              onClick={handleToggleDialog}
               sx={{
                 bgcolor: '#e4e6e9',
                 '&:hover': { bgcolor: '#d8dadf' }
@@ -516,6 +543,13 @@ export default function Sidebar() {
           </Box>
         )}
       </ConversationList>
+
+      {openDialog && (
+        <DialogContact
+          handleClose={handleToggleDialog}
+          onSelectUser={handleCreateConversation}
+        />
+      )}
     </SidebarContainer>
   )
 }
