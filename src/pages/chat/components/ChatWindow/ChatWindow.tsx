@@ -312,25 +312,13 @@ const ChatWindow = () => {
     }
   }
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = async (): Promise<void> => {
     if (!message.trim() || !conversationId || isSending) return
 
     const messageContent = message.trim()
     setMessage('')
     stopTyping()
 
-    // Optimistic update - add message immediately
-    const tempId = `temp-${Date.now()}`
-    const optimisticMessage: TResponseMessage = {
-      id: tempId,
-      content: messageContent,
-      conversationId: conversationId,
-      senderId: user?.id || '',
-      sender: user!,
-      updatedAt: new Date().toISOString(),
-      type: 'TEXT'
-    }
-    setMessages(prev => [...prev, optimisticMessage])
 
     // Send via socket
     if (isConnected) {
@@ -339,7 +327,18 @@ const ChatWindow = () => {
         const response = await socketSendMessage(messageContent)
         if (response?.id) {
           // Update temp message with real ID
-          setMessages(prev => prev.map(msg => (msg.id === tempId ? { ...msg, id: response.id } : msg)))
+          setMessages([
+            ...messages,
+            {
+              id: response.id,
+              content: messageContent,
+              conversationId: conversationId,
+              senderId: user?.id || '',
+              sender: user!,
+              updatedAt: new Date().toISOString(),
+              type: 'TEXT'
+            }
+          ])
         }
       } catch (error) {
         console.error('Failed to send message:', error)
